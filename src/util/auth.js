@@ -64,7 +64,7 @@ function useProvideAuth() {
           setIsAuthenticating(false);
         });
     }
-  }, [code, push, scope]);
+  }, [code, push, scope, expiresIn]);
 
   return {
     isAuthenticating,

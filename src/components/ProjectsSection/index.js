@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
 import { useAuth } from '../../util/auth';
@@ -123,57 +123,60 @@ function ProjectsSection() {
     user: { id: userId },
   } = useAuth();
 
-  const handleSubmit = async reqWeek => {
-    setLoading(true);
-    setError('');
+  const handleSubmit = useCallback(
+    async reqWeek => {
+      setLoading(true);
+      setError('');
 
-    let startDate = moment();
-    let endDate = moment();
-    const subsMod = reqWeek ? weekModifier + reqWeek : 0;
+      let startDate = moment();
+      let endDate = moment();
+      const subsMod = reqWeek ? weekModifier + reqWeek : 0;
 
-    if (reqWeek && subsMod) {
-      if (reqWeek > 0) {
-        startDate = startDate.add(subsMod, 'weeks');
-        endDate = endDate.add(subsMod, 'weeks');
-      } else {
-        startDate = startDate.subtract(Math.abs(subsMod), 'weeks');
-        endDate = endDate.subtract(Math.abs(subsMod), 'weeks');
+      if (reqWeek && subsMod) {
+        if (reqWeek > 0) {
+          startDate = startDate.add(subsMod, 'weeks');
+          endDate = endDate.add(subsMod, 'weeks');
+        } else {
+          startDate = startDate.subtract(Math.abs(subsMod), 'weeks');
+          endDate = endDate.subtract(Math.abs(subsMod), 'weeks');
+        }
       }
-    }
 
-    startDate = startDate.startOf('isoWeek');
-    endDate = endDate.endOf('isoWeek');
+      startDate = startDate.startOf('isoWeek');
+      endDate = endDate.endOf('isoWeek');
 
-    if (subsMod !== weekModifier) {
-      setWeek(subsMod);
-    }
-    setDateString(
-      [startDate, endDate]
-        .map((day, i) => {
-          if (!i) {
-            return day.format('D.M');
-          }
-          return `${day.format('D.M.YYYY')} (week ${day.format('w')})`;
-        })
-        .join(' - '),
-    );
+      if (subsMod !== weekModifier) {
+        setWeek(subsMod);
+      }
+      setDateString(
+        [startDate, endDate]
+          .map((day, i) => {
+            if (!i) {
+              return day.format('D.M');
+            }
+            return `${day.format('D.M.YYYY')} (week ${day.format('w')})`;
+          })
+          .join(' - '),
+      );
 
-    const balance = await projectBalance({
-      startDate: startDate.format('YYYYMMDD'),
-      endDate: endDate.format('YYYYMMDD'),
-      harvestUserId: userId,
-    }).catch(e => {
-      setError(e.error_description);
-    });
+      const balance = await projectBalance({
+        startDate: startDate.format('YYYYMMDD'),
+        endDate: endDate.format('YYYYMMDD'),
+        harvestUserId: userId,
+      }).catch(e => {
+        setError(e.error_description);
+      });
 
-    setLoading(false);
-    setData(balance);
-  };
+      setLoading(false);
+      setData(balance);
+    },
+    [userId, weekModifier],
+  );
 
   useEffect(() => {
     // code to run on component mount
     handleSubmit();
-  }, []);
+  }, [handleSubmit]);
 
   if (error) {
     return (
